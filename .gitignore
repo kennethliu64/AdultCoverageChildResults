@@ -18,3 +18,6 @@ venv/
 
 # Claude Code local state
 .claude/
+
+# NPI-level analysis panels (local only)
+analysis/**/output/*.parquet
