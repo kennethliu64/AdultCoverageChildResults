@@ -1,0 +1,32 @@
+state,event,effective,description,source,source_type
+VA,adopt,2021-07,Comprehensive adult dental benefit for all adult enrollees,https://scholarscompass.vcu.edu/etd/8420/,secondary
+ME,adopt,2022-07,Comprehensive adult dental benefit (MaineCare),https://carequest.org/blog/five-key-takeaways-about-medicaid-adult-dental-benefits-in-2023/,secondary
+MD,adopt,2023-01,Adult dental benefit for all adult enrollees,https://carequest.org/blog/five-key-takeaways-about-medicaid-adult-dental-benefits-in-2023/,secondary
+TN,adopt,2023-01,Adult dental benefit for about 600000 adults (TennCare),https://carequest.org/blog/medicaid-adult-dental-benefits-are-on-the-move-in-2024/,secondary
+NH,adopt,2023-04,Adult dental benefit replacing emergency-only coverage,https://carequest.org/blog/medicaid-adult-dental-benefits-are-on-the-move-in-2024/,secondary
+HI,adopt,2023-01,Preventive restorative and some denture coverage for adults; SPA 22-0012,https://medquest.hawaii.gov/content/dam/formsanddocuments/resources/recent-news/Dental_benefit_announcement_v2.pdf,primary
+KS,adopt,2022-07,Preventive and restorative benefit for all adults after 2010 elimination,https://carequest.org/blog/a-new-oral-health-outlook-for-2-million-americans/,secondary
+DE,adopt,2020-10,First adult dental benefit for all adult enrollees,https://carequest.org/blog/a-new-oral-health-outlook-for-2-million-americans/,secondary
+WV,adopt,2021-01,Adult benefit with $1000 annual cap replacing emergency-only (SB 648); date conflicts across sources,https://carequest.org/blog/a-new-oral-health-outlook-for-2-million-americans/,secondary
+OK,adopt,2021-07,Exams cleanings fillings SRP dentures for traditional and expansion adults; SPA OK-21-0029,https://www.medicaid.gov/medicaid-spa/2021-07-06/109796,primary
+GA,adopt,2024-07,Diagnostic preventive and oral surgery added for adults (FY2025),https://files.kff.org/attachment/Report-Results-from-an-Annual-Medicaid-Budget-Survey-for-State-Fiscal-Years-2024-and-2025.pdf,secondary
+CA,expand,2018-01,Restoration of remaining optional adult dental benefits (Denti-Cal),https://www.chcs.org/media/Medicaid-Adult-Dental-Benefits-Overview-Appendix_091519.pdf,secondary
+KY,expand,2023-01,Limited benefit expanded to dentures endodontics periodontics and two cleanings,https://decisionsindentistry.com/2022/10/kentucky-expands-medicaid-coverage-include-dental-care-adults/,secondary
+MI,expand,2023-04,Healthy Michigan dental benefit extended to all adult enrollees,https://carequest.org/blog/medicaid-adult-dental-benefits-are-on-the-move-in-2024/,secondary
+KS,expand,2023-07,Full and partial dentures added for all adults,https://carequest.org/blog/a-new-oral-health-outlook-for-2-million-americans/,secondary
+CO,expand,2023-07,Annual adult dental cap ($1500) removed,https://carequest.org/blog/as-medicaid-budgets-tighten-what-happens-to-adult-dental-benefits/,secondary
+NE,expand,2023-07,Annual adult benefit cap ($750) removed in FY2024,https://files.kff.org/attachment/Report-Results-from-an-Annual-Medicaid-Budget-Survey-for-State-Fiscal-Years-2024-and-2025.pdf,secondary
+VT,expand,2023-07,Annual dental cap eliminated for certain adults in FY2024,https://files.kff.org/attachment/Report-Results-from-an-Annual-Medicaid-Budget-Survey-for-State-Fiscal-Years-2024-and-2025.pdf,secondary
+MN,expand,2024-01,Medically necessary dental extended to all adults,https://govfacts.org/government/federal/agencies/hhs/cms/does-medicaid-cover-adult-dental-care-a-state-by-state-guide/,secondary
+CT,expand,2024-01,Periodontal services added for certain adults,https://govfacts.org/government/federal/agencies/hhs/cms/does-medicaid-cover-adult-dental-care-a-state-by-state-guide/,secondary
+NY,expand,2024-01,Root canals and crowns explicitly covered in managed care,https://govfacts.org/government/federal/agencies/hhs/cms/does-medicaid-cover-adult-dental-care-a-state-by-state-guide/,secondary
+WV,expand,2024-07,Annual cap raised from $1000 to $2000,https://carequest.org/blog/a-new-oral-health-outlook-for-2-million-americans/,secondary
+VA,aca,2019-01,ACA Medicaid expansion,https://www.kff.org/medicaid/status-of-state-medicaid-expansion-decisions/,secondary
+ME,aca,2019-01,ACA Medicaid expansion,https://www.kff.org/medicaid/status-of-state-medicaid-expansion-decisions/,secondary
+ID,aca,2020-01,ACA Medicaid expansion,https://www.kff.org/medicaid/status-of-state-medicaid-expansion-decisions/,secondary
+UT,aca,2020-01,ACA Medicaid expansion (full),https://www.kff.org/medicaid/status-of-state-medicaid-expansion-decisions/,secondary
+NE,aca,2020-10,ACA Medicaid expansion,https://www.kff.org/medicaid/status-of-state-medicaid-expansion-decisions/,secondary
+OK,aca,2021-07,ACA Medicaid expansion,https://www.kff.org/medicaid/status-of-state-medicaid-expansion-decisions/,secondary
+MO,aca,2021-10,ACA Medicaid expansion,https://www.kff.org/medicaid/status-of-state-medicaid-expansion-decisions/,secondary
+SD,aca,2023-07,ACA Medicaid expansion,https://www.kff.org/medicaid/status-of-state-medicaid-expansion-decisions/,secondary
+NC,aca,2023-12,ACA Medicaid expansion,https://www.kff.org/medicaid/status-of-state-medicaid-expansion-decisions/,secondary

@@ -1,0 +1,9 @@
+outcome,state,n_controls,did_log,perm_p,placebo_sd,pct,mde_pct,spec
+total,POOLED,,0.1123,0.0006,0.0288,11.8877,8.3998,strict_dq
+total,POOLED,,0.0996,0.0006,0.0267,10.4766,7.7762,drop_falsification_flags
+adult_markers,POOLED,,1.713,0.0002,0.2835,454.5777,121.18,strict_dq
+adult_markers,POOLED,,1.8648,0.0002,0.1794,545.4624,65.2523,drop_falsification_flags
+prev_diag,POOLED,,0.1103,0.0002,0.0281,11.6581,8.1782,strict_dq
+prev_diag,POOLED,,0.0986,0.0036,0.0276,10.3653,8.048,drop_falsification_flags
+ortho,POOLED,,-0.201,0.2729,0.192,-18.2099,71.195,strict_dq
+ortho,POOLED,,-0.214,0.2152,0.179,-19.2636,65.0855,drop_falsification_flags

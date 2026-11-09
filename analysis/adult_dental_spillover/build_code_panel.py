@@ -4,8 +4,9 @@ Reads the merged + geocoded claims file (gitignored, ~23M rows) and writes
 
   output/code_panel_state.csv      state x month x age group x provider type
                                     (small; safe to commit)
-  output/code_panel_provider.parquet  NPI x month x age group, treated and
-                                    control states only (local; do not commit)
+  output/code_panel_provider.parquet  NPI x month x age group, all states
+                                    (local; do not commit). Treated and control
+                                    states are chosen later, by design.py.
 
     python analysis/adult_dental_spillover/build_code_panel.py \
         --merged data/MergedHHS-NPI/merged_hhs_nppes_geo.csv
@@ -65,11 +66,6 @@ STATE_FIPS = {
     "55": "WI", "56": "WY",
 }  # fmt: skip
 
-STUDY_STATES = [
-    "VA", "ME", "MD", "TN", "NH",
-    "AK", "AL", "AR", "CT", "GA", "IA", "KS", "LA", "MA", "MS",
-    "NC", "NJ", "NM", "NY", "OR", "RI", "WA", "WI", "WY",
-]  # fmt: skip
 
 
 def sql_list(xs: list[str]) -> str:
@@ -131,7 +127,7 @@ def main() -> None:
         COPY (
             SELECT state, npi, prov_type, ym, age_group,
                    SUM(claims) AS claims, SUM(benes) AS benes, SUM(paid) AS paid
-            FROM base WHERE state IN ({sql_list(STUDY_STATES)})
+            FROM base
             GROUP BY ALL ORDER BY ALL
         ) TO '{(OUT / "code_panel_provider.parquet").as_posix()}' (FORMAT PARQUET)
         """
