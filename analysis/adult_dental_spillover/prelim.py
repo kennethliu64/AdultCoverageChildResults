@@ -142,9 +142,16 @@ def estimate(raw, total, design, drop=None):
     res = pd.DataFrame(rows)
     res["mde"] = 2.8 * res.placebo_sd  # 80% power, two-sided 5%
     res["pct_of_baseline"] = 100 * res.did / res.baseline  # change relative to the outcome's own pre level
-    tp = pd.concat(paths, axis=1)
-    band = pd.concat([pd.concat([cpaths[s][c] for s, c in p.items()], axis=1).mean(axis=1) for p in picks[:1000]], axis=1)
+    # Sort by event time: windows that include the COVID months have gaps, so concat order is not time order.
+    tp = pd.concat(paths, axis=1).sort_index()
+    band = pd.concat(
+        [pd.concat([cpaths[s][c] for s, c in p.items()], axis=1).mean(axis=1) for p in picks[:1000]], axis=1
+    ).sort_index()
     return res, (tp, band.quantile(0.05, axis=1), band.quantile(0.95, axis=1))
+
+
+def fmt_p(p: float) -> str:
+    return "p < 0.001" if p < 0.001 else f"p = {p:.3f}"
 
 
 def plot(bands: dict, res: pd.DataFrame, keys: list[str], fname: str) -> None:
@@ -162,7 +169,7 @@ def plot(bands: dict, res: pd.DataFrame, keys: list[str], fname: str) -> None:
         ax.axvline(-0.5, color=muted, lw=1, ls="--")
         ax.axhline(0, color=muted, lw=0.8)
         r = res[(res.outcome == y) & (res.state == "POOLED")].iloc[0]
-        ax.set_title(f"{LABELS[y]}\npooled {r.did:+.2f}, p={r.perm_p:.3f}, MDE ±{r.mde:.2f}", fontsize=9.5, color=ink, loc="left")
+        ax.set_title(f"{LABELS[y]}\npooled {r.did:+.2f}, {fmt_p(r.perm_p)}, MDE ±{r.mde:.2f}", fontsize=9.5, color=ink, loc="left")
         ax.tick_params(colors=muted, labelsize=8)
         for sp in ("top", "right"):
             ax.spines[sp].set_visible(False)
