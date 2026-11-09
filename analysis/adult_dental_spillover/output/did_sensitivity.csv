@@ -7,3 +7,13 @@ prev_diag,strict_dq,12.2461,15.167,0.0002,7.0075
 prev_diag,drop_falsification_flags,11.3787,14.0928,0.0002,6.7519
 ortho,strict_dq,-0.0359,-2.4646,0.6899,0.2857
 ortho,drop_falsification_flags,-0.0574,-3.9406,0.5705,0.2992
+code_child,strict_dq,1.1731,4.8184,0.0832,1.9036
+code_child,drop_falsification_flags,0.8103,3.3283,0.1722,1.6591
+code_child_general,strict_dq,-0.2795,-4.5065,0.5029,1.2378
+code_child_general,drop_falsification_flags,-0.3709,-5.9802,0.3705,1.2077
+code_child_pediatric,strict_dq,0.499,5.1328,0.1918,1.0694
+code_child_pediatric,drop_falsification_flags,0.3067,3.1545,0.3433,0.9186
+code_adult,strict_dq,0.3508,312.528,0.0002,0.2289
+code_adult,drop_falsification_flags,0.3566,317.7251,0.0002,0.2265
+code_teen_adult,strict_dq,1.9072,45.4687,0.0002,0.5674
+code_teen_adult,drop_falsification_flags,1.8416,43.9064,0.0002,0.5815
