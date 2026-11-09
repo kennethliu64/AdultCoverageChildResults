@@ -19,12 +19,15 @@ Rule 3  Clean window. No state in a stack, treated or control, may have a
         adoption.
 Rule 4  Usable data. No state in a stack may have, inside the window,
         (a) a CMS DQ Atlas rating of "Unusable" for Claims Volume - OT or
-            Procedure Codes - OT Professional (the rule CMS applies in its
-            own Medicaid dental reporting), or
+            Procedure Codes - OT Professional (two of the three topics CMS
+            uses to suppress state-months in its own Medicaid dental
+            reporting; the third, enrollment, is not in our DQ file), or
         (b) a reporting break: average monthly dental claims changing by
-            more than 1.5x between consecutive half-years (2020H1, the COVID
-            shutdown, skipped). The policy effect is about 1.1x, so this
-            cannot select on treatment.
+            more than 1.5x between consecutive half-years. The policy effect
+            is about 1.15x, so this cannot select on treatment.
+
+COVID: the shutdown months (COVID_MONTHS) are dropped everywhere: outcomes,
+baselines, the reporting-break test and the falsification check.
 
 Robustness checks (never used in the main estimate):
   - strict data quality: Rule 4a also drops "High concern"
@@ -47,6 +50,7 @@ ROOT = HERE.parents[1]
 
 START, END = "2018-01", "2024-09"  # END drops the Nov/Dec 2024 claims lag (LIMITATIONS L02)
 PRE, POST = 24, 18
+COVID_MONTHS = ("2020-03", "2020-06")  # inclusive; dropped from every calculation
 BREAK_RATIO = 1.5
 DQ_TOPICS = ("claims-volume", "proc-cd-prof")
 FALSIFY_RATIO = 3.0
@@ -60,6 +64,12 @@ STATES = (
 
 def ym(d: str, k: int = 0) -> str:
     return (pd.Period(d, "M") + k).strftime("%Y-%m")
+
+
+def drop_covid(df: pd.DataFrame | pd.Series) -> pd.DataFrame | pd.Series:
+    """Remove the COVID shutdown months (index is 'YYYY-MM')."""
+    keep = (df.index < COVID_MONTHS[0]) | (df.index > COVID_MONTHS[1])
+    return df[keep]
 
 
 @dataclass
@@ -105,10 +115,9 @@ def _break(total: pd.DataFrame, state: str, lo: str, hi: str) -> str | None:
     """Rule 4b."""
     if state not in total.columns:
         return "no data"
-    s = total[state].loc[lo:hi]
+    s = drop_covid(total[state].loc[lo:hi])
     p = pd.PeriodIndex(s.index, freq="M")
     half = s.groupby([f"{x.year}H{1 if x.month <= 6 else 2}" for x in p]).mean()
-    half = half[half.index != "2020H1"]
     if (half <= 0).any():
         return "reporting break (zero claims)"
     r = np.exp(np.abs(np.diff(np.log(half.values)))).max(initial=1.0)
@@ -150,6 +159,7 @@ def build(total: pd.DataFrame, strict_dq: bool = False) -> Design:
 
 def falsification_flags(adult: pd.DataFrame, total: pd.DataFrame, st: Stack) -> list[str]:
     """Robustness: controls whose adult-marker share rises FALSIFY_RATIO-fold or more."""
+    adult, total = drop_covid(adult), drop_covid(total)
     pre_end = ym(st.adopt, -1)
     flags = []
     for c in st.controls:

@@ -35,7 +35,7 @@ Four rules, applied the same way to every state. The design is a stacked differe
 1. **Policy events.** Every event is a row in `policy_events.csv` with a date and a source. An `adopt` event means the state began covering routine cleanings for all non-pregnant adults, with no such coverage before. Any other change to an adult dental benefit is `expand`. ACA Medicaid expansion is `aca`.
 2. **Window.** Every sub-experiment covers 24 months before and 18 months after adoption. An adopter is treated only if its whole window fits inside the data (2018-01 to 2024-09).
 3. **Clean window.** No state in a sub-experiment, treated or control, may have a policy event inside the window, apart from the treated state's own adoption.
-4. **Usable data.** No state in a sub-experiment may have, inside the window, a CMS DQ Atlas rating of "Unusable" for Claims Volume – OT or Procedure Codes – OT Professional. CMS applies that rule in its own Medicaid dental reporting. No state may have a reporting break either, meaning average monthly dental claims changing more than 1.5× between consecutive half-years (2020H1 skipped for the COVID shutdown). The policy effect is about 1.15×, so this cannot select on treatment.
+4. **Usable data.** No state in a sub-experiment may have, inside the window, a CMS DQ Atlas rating of "Unusable" for Claims Volume – OT or Procedure Codes – OT Professional. These are two of the three topics CMS uses to suppress state-months in its own Medicaid dental reporting; the third (enrollment) is not in our DQ file. No state may have a reporting break either, meaning average monthly dental claims changing more than 1.5× between consecutive half-years. The policy effect is about 1.15×, so this cannot select on treatment.
 
 There are two robustness checks, and neither is used in the main estimate. The first is strict data quality, which also drops DQ Atlas "High concern". The second drops controls whose adult-marker share of claims rises 3× or more within the window, a sign of a policy change missing from the events file.
 
@@ -56,41 +56,45 @@ Dates come from state agency documents for HI (SPA 22-0012) and OK (SPA OK-21-00
 
 ## Estimation
 
-Every outcome uses one scale: monthly claims per 100 of the state's own average monthly dental claims in the 24 pre-adoption months. A result of +5 on any outcome means 5% of the state's baseline dental volume. Adult and child changes are therefore in the same units, and zero counts need no special handling.
+Every outcome uses one scale: monthly claims per 100 of the state's own average monthly dental claims in the 24 pre-adoption months. Adult and child changes are therefore in the same units, and zero counts need no special handling. `pct_of_baseline` in the outputs restates each estimate as a percent of that outcome's own pre-adoption level in the treated states.
 
-Each sub-experiment's estimate is a 2×2 DiD (post minus pre gap between the treated state and the mean of its controls). The pooled estimate is the equal-weight mean across sub-experiments. March to June 2020 is dropped. The panel ends 2024-09 to avoid the late-2024 claims lag (LIMITATIONS L02).
+Each sub-experiment's estimate is a 2×2 DiD (post minus pre gap between the treated state and the mean of its controls). The pooled estimate is the equal-weight mean across sub-experiments. COVID shutdown months (March to June 2020) are dropped from every calculation: outcomes, baselines, the reporting-break test and the falsification check. The panel ends 2024-09 to avoid the late-2024 claims lag (LIMITATIONS L02).
 
-Inference is by permutation, the standard approach with few treated units (Conley and Taber 2011; MacKinnon and Webb 2020). Each control is re-run as a placebo against the other controls in its sub-experiment. The pooled p-value comes from 5,000 draws of one placebo per sub-experiment. The minimum detectable effect (MDE) is 2.8 × the placebo SD (80% power, two-sided 5%).
+Inference is by permutation, the standard approach with few treated units (Conley and Taber 2011; MacKinnon and Webb 2020). Each control is re-run as a placebo against the other controls in its sub-experiment. The pooled p-value comes from 5,000 draws that assign one placebo state to each sub-experiment, never the same state twice in a draw. The minimum detectable effect (MDE) is 2.8 × the placebo SD (80% power, two-sided 5%).
 
-## Results (category level)
+When the code-level panel is present, `prelim.py` first checks that its state-month totals equal the shipped category totals exactly (both come from the same merged file) and stops if they do not.
+
+## Results
 
 Units are claims per 100 baseline dental claims.
 
-| Outcome                                         | Pooled DiD | Permutation p |   MDE |
-| ----------------------------------------------- | ---------: | ------------: | ----: |
-| All dental claims                               |      +15.3 |       < 0.001 |  ±9.6 |
-| Preventive + diagnostic                         |      +12.0 |       < 0.001 |  ±7.5 |
-| Adult-marker categories (perio, prosthodontics) |      +0.38 |         0.001 | ±0.28 |
-| Orthodontics                                    |      −0.06 |          0.60 | ±0.33 |
+| Outcome                                         | Pooled DiD | % of own baseline | Permutation p |   MDE |
+| ----------------------------------------------- | ---------: | ----------------: | ------------: | ----: |
+| All dental claims                               |      +15.0 |              +15% |       < 0.001 |  ±8.6 |
+| Preventive + diagnostic                         |      +11.8 |              +15% |       < 0.001 |  ±6.9 |
+| Adult-marker categories (perio, prosthodontics) |      +0.37 |             +222% |       < 0.001 | ±0.26 |
+| Orthodontics                                    |      −0.05 |               −4% |          0.62 | ±0.30 |
 
-By state, total claims rose 31.7 in MD, 17.0 in VA and ME, 15.7 in HI and 12.4 in TN. NH fell 2.1. The pooled total is +15.8 with strict data quality and +14.5 with flagged controls dropped.
+By state, total claims rose 31.7 in MD, 17.0 in ME, 15.7 in HI, 15.4 in VA and 12.4 in TN. NH fell 2.1. The pooled total is +15.6 with strict data quality and +14.4 with flagged controls dropped.
+
+The first code-level run on the full merged file (1,215.5M claims, reconciling exactly with the category totals) gave child-marker codes +1.08 (p = 0.14, MDE ±2.1), general dentists −0.30 (p = 0.49), pediatric dentists +0.43 (p = 0.28), adult-marker codes +0.36 (p < 0.001) and D1110 +1.89 (p < 0.001). That run predates the COVID-baseline and placebo-draw fixes, so rerun before quoting.
 
 ## What this means for the paper
 
-1. The first stage is clear. Adult-marker claims rise within three months of each start date and stay up. Their small size (+0.38) reflects HHS small-cell suppression of low-volume adult procedures, so treat it as a timing check.
-2. Total volume rises about 15% of baseline. If children's claims were unchanged, that is the size of the adult inflow.
-3. A state-level design cannot detect displacement. The MDE is about 10 per 100. A plausible displacement (a quarter of the inflow, about 4) is below detection.
-4. The child question has to be answered within states at the provider level. Compare children's claims at general dentists (who absorb new adults) with children's claims at pediatric dentists (taxonomy 1223P0221X), using `output/code_panel_provider.parquet`. Add heterogeneity by each dentist's pre-period Medicaid volume and by county dentist supply.
-5. NH needs a closer look. Adult-marker claims rise in the months before its April 2023 date, and total claims do not move. The date may be wrong, or NH adult claims may flow through a channel this data misses.
+1. Adults came in. Adult-marker categories and codes rise within three months of each start date and stay up. Small-cell suppression hides most low-volume adult procedures, so treat their size as a lower bound.
+2. Total dental volume rises about 15% of baseline.
+3. Children's care did not fall. Child-marker codes moved up, not down, and the estimate rules out a drop larger than about 2% of children's volume. The rise itself is not statistically reliable.
+4. The general-dentist dip and pediatric-dentist rise point the way displacement would, but neither is reliable and the gap has not been tested directly. The provider panel (`output/code_panel_provider.parquet`) is where to test it.
+5. NH needs a closer look. Adult-marker claims rise in the months before its April 2023 date, and total claims do not move.
 
 ## Next steps
 
-1. Run `build_code_panel.py` on the merged file. It splits claims into child-marker codes (D0145, D1120, D1351, D1208, space maintainers, D2930, primary-tooth pulpal therapy), adult-marker codes (D4341/D4342, D4355, D4910, dentures), D1110 (age 14 and up) and mixed, and providers into pediatric, general and other by NPPES taxonomy.
-2. Benchmark Virginia's code-level adult volume against DMAS published adult dental utilization to measure how much small-cell suppression hides.
-3. Add CMS monthly Medicaid enrollment for adults and children (data.medicaid.gov). The 2023 adoptions overlap the start of unwinding.
-4. Collect child fee-schedule changes around each adoption date. A child fee increase at the same time would confound the child outcome.
-5. Verify every date in `policy_events.csv` against primary sources.
+1. Rerun `build_code_panel.py` and `prelim.py`, and commit `output/code_panel_state.csv` (never the parquet).
+2. Test the general-versus-pediatric gap directly, with heterogeneity by county dentist supply.
+3. Benchmark Virginia's code-level adult volume against DMAS published adult dental utilization to measure how much small-cell suppression hides.
+4. Add CMS monthly Medicaid enrollment for adults and children (data.medicaid.gov). The 2023 adoptions overlap the start of unwinding.
+5. Collect child fee-schedule changes around each adoption date, and verify every date in `policy_events.csv` against primary sources.
 
 ## Limitations
 
-Category outcomes mix children and adults, so the child effect is not identified until the code-level panel is built. Geography comes from the provider's practice address. The policy events file can miss changes. The falsification check is there to catch those, and it flags SC and UT in most sub-experiments. See [`docs/LIMITATIONS.md`](../../docs/LIMITATIONS.md) for the full data ledger.
+Category outcomes mix children and adults; only the code-level outcomes separate them. Geography comes from the provider's practice address. The policy events file can miss changes. The falsification check is there to catch those, and it flags SC and UT in most sub-experiments (results barely move when they are dropped). See [`docs/LIMITATIONS.md`](../../docs/LIMITATIONS.md) for the full data ledger.

@@ -68,6 +68,11 @@ STATE_FIPS = {
 
 
 
+from design import STATES  # noqa: E402  (same state list as the analysis)
+
+assert set(STATE_FIPS.values()) == set(STATES), "state lists in build_code_panel.py and design.py differ"
+
+
 def sql_list(xs: list[str]) -> str:
     return ", ".join(f"'{x}'" for x in xs)
 

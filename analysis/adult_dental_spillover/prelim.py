@@ -31,7 +31,6 @@ SRC = D.ROOT / "public/data/provider_procedure_category_aggregate_monthly_state.
 CODE_PANEL = D.HERE / "output" / "code_panel_state.csv"
 OUT = D.HERE / "output"
 OUT.mkdir(exist_ok=True)
-COVID = ("2020-03", "2020-06")  # shutdown months, dropped from every estimate
 RNG = np.random.default_rng(20261109)
 N_DRAWS = 5000
 UNIT = "claims per 100 baseline dental claims"
@@ -71,10 +70,14 @@ def load_category() -> dict[str, pd.DataFrame]:
     }
 
 
-def load_code() -> dict[str, pd.DataFrame]:
+def load_code(category_total: pd.DataFrame) -> dict[str, pd.DataFrame]:
     if not CODE_PANEL.exists():
         return {}
     c = pd.read_csv(CODE_PANEL, dtype={"ym": str})
+    # Both panels come from the same merged file, so totals must match exactly.
+    diff = (_wide(c) - category_total).abs().values.max()
+    if diff > 1:
+        raise SystemExit(f"code panel and category totals disagree by up to {diff:,.0f} claims in a state-month")
     child = c.age_group == "child"
     return {
         "code_child": _wide(c[child]),
@@ -86,9 +89,8 @@ def load_code() -> dict[str, pd.DataFrame]:
 
 
 def scaled(raw: pd.DataFrame, total: pd.DataFrame, st: D.Stack, states: list[str]) -> pd.DataFrame:
-    base = total.loc[st.lo : D.ym(st.adopt, -1), states].mean()
-    y = raw.reindex(index=total.index, fill_value=0).loc[st.lo : st.hi, states] / base * 100
-    y.loc[(y.index >= COVID[0]) & (y.index <= COVID[1])] = np.nan
+    base = D.drop_covid(total.loc[st.lo : D.ym(st.adopt, -1), states]).mean()
+    y = D.drop_covid(raw.reindex(index=total.index, fill_value=0).loc[st.lo : st.hi, states]) / base * 100
     y.index = [(pd.Period(m, "M") - pd.Period(st.adopt, "M")).n for m in y.index]  # event time
     return y
 
@@ -103,35 +105,45 @@ def did(y: pd.DataFrame, s: str, ctl: list[str]) -> float:
 
 
 def estimate(raw, total, design, drop=None):
-    per, plac, paths, cpaths = {}, {}, {}, {}
+    per, plac, paths, cpaths, base = {}, {}, {}, {}, {}
     for st in design.stacks:
         ctl = [c for c in st.controls if c not in (drop or {}).get(st.state, [])]
         y = scaled(raw, total, st, [st.state] + ctl)
         per[st.state] = did(y, st.state, ctl)
-        plac[st.state] = np.array([did(y, c, [x for x in ctl if x != c]) for c in ctl])
+        base[st.state] = y.loc[y.index < 0, st.state].mean()  # outcome's own baseline, same units
+        plac[st.state] = {c: did(y, c, [x for x in ctl if x != c]) for c in ctl}
         g = gap(y, st.state, ctl)
         paths[st.state] = g - g.loc[-12:-1].mean()
-        cp = []
+        cp = {}
         for c in ctl:
             gc = gap(y, c, [x for x in ctl if x != c])
-            cp.append(gc - gc.loc[-12:-1].mean())
+            cp[c] = gc - gc.loc[-12:-1].mean()
         cpaths[st.state] = cp
-    rows = [
-        dict(state=s, n_controls=len(plac[s]), did=e, perm_p=(1 + (np.abs(plac[s]) >= abs(e)).sum()) / (1 + len(plac[s])),
-             placebo_sd=plac[s].std(ddof=1))
-        for s, e in per.items()
-    ]  # fmt: skip
+
+    def placebo_draw() -> dict[str, str]:
+        """One pseudo-treated control per stack, never the same state twice in a draw."""
+        used, pick = set(), {}
+        for s in per:
+            options = [c for c in plac[s] if c not in used] or list(plac[s])
+            pick[s] = options[RNG.integers(len(options))]
+            used.add(pick[s])
+        return pick
+
+    rows = []
+    for s, e in per.items():
+        v = np.array(list(plac[s].values()))
+        rows.append(dict(state=s, n_controls=len(v), did=e, baseline=base[s],
+                         perm_p=(1 + (np.abs(v) >= abs(e)).sum()) / (1 + len(v)), placebo_sd=v.std(ddof=1)))  # fmt: skip
+    picks = [placebo_draw() for _ in range(N_DRAWS)]
     pooled = np.mean(list(per.values()))
-    draws = np.array([np.mean([RNG.choice(plac[s]) for s in per]) for _ in range(N_DRAWS)])
-    rows.append(dict(state="POOLED", n_controls=np.nan, did=pooled,
+    draws = np.array([np.mean([plac[s][c] for s, c in p.items()]) for p in picks])
+    rows.append(dict(state="POOLED", n_controls=np.nan, did=pooled, baseline=np.mean(list(base.values())),
                      perm_p=(1 + (np.abs(draws) >= abs(pooled)).sum()) / (1 + N_DRAWS), placebo_sd=draws.std(ddof=1)))  # fmt: skip
     res = pd.DataFrame(rows)
     res["mde"] = 2.8 * res.placebo_sd  # 80% power, two-sided 5%
+    res["pct_of_baseline"] = 100 * res.did / res.baseline  # change relative to the outcome's own pre level
     tp = pd.concat(paths, axis=1)
-    band = pd.concat(
-        [pd.concat([cpaths[s][RNG.integers(len(cpaths[s]))] for s in paths], axis=1).mean(axis=1) for _ in range(1000)],
-        axis=1,
-    )
+    band = pd.concat([pd.concat([cpaths[s][c] for s, c in p.items()], axis=1).mean(axis=1) for p in picks[:1000]], axis=1)
     return res, (tp, band.quantile(0.05, axis=1), band.quantile(0.95, axis=1))
 
 
@@ -166,7 +178,7 @@ def plot(bands: dict, res: pd.DataFrame, keys: list[str], fname: str) -> None:
 
 def main() -> None:
     outcomes = load_category()
-    outcomes.update(load_code())
+    outcomes.update(load_code(outcomes["total"]))
     total = outcomes["total"]
     design = D.build(total)
     strict = D.build(total, strict_dq=True)
@@ -181,9 +193,10 @@ def main() -> None:
         for name, kw in [("strict_dq", dict(design=strict)), ("drop_falsification_flags", dict(design=design, drop=flags))]:
             rs, _ = estimate(raw, total, **kw)
             sens.append(rs[rs.state == "POOLED"].assign(outcome=y, spec=name))
-    res = pd.concat(main_res, ignore_index=True)[["outcome", "state", "n_controls", "did", "perm_p", "placebo_sd", "mde"]]
+    cols = ["outcome", "state", "n_controls", "baseline", "did", "pct_of_baseline", "perm_p", "placebo_sd", "mde"]
+    res = pd.concat(main_res, ignore_index=True)[cols]
     res.round(4).to_csv(OUT / "did_estimates.csv", index=False)
-    s = pd.concat(sens, ignore_index=True)[["outcome", "spec", "did", "perm_p", "mde"]]
+    s = pd.concat(sens, ignore_index=True)[["outcome", "spec", "did", "pct_of_baseline", "perm_p", "mde"]]
     s.round(4).to_csv(OUT / "did_sensitivity.csv", index=False)
 
     plot(bands, res, ["total", "adult_markers", "prev_diag", "ortho"], "event_study_category.png")
@@ -192,7 +205,7 @@ def main() -> None:
     pd.set_option("display.width", 200)
     print(D.describe(design)[["treated", "adopt", "n_controls", "dropped"]].to_string(index=False, max_colwidth=80))
     print(f"\nPooled DiD, {UNIT}")
-    print(res[res.state == "POOLED"][["outcome", "did", "perm_p", "mde"]].round(3).to_string(index=False))
+    print(res[res.state == "POOLED"][["outcome", "baseline", "did", "pct_of_baseline", "perm_p", "mde"]].round(3).to_string(index=False))
     print(s.round(3).to_string(index=False))
 
 
